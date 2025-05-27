@@ -65,32 +65,32 @@ active proctype Traffic() {
     :: (EW.sense && !EW.req) ->
         EW.req = true;
     :: (EW.sense && EW.color == GREEN) ->
-            EW.sense = false;
+        EW.sense = false;
 
     :: (SD.sense && !SD.req) ->
             SD.req = true;
     :: (SD.sense && SD.color == GREEN) ->
-            SD.sense = false;
+        SD.sense = false;
 
     :: (WN.sense && !WN.req) ->
             WN.req = true;
     :: (WN.sense && WN.color == GREEN) ->
-            WN.sense = false;
+        WN.sense = false;
 
     :: (WD.sense && !WD.req) ->
-            WD.req = true;
+        WD.req = true;
     :: (WD.sense && WD.color == GREEN) ->
-            WD.sense = false;
+        WD.sense = false;
 
     :: (DN.sense && !DN.req) ->
-            DN.req = true;
+        DN.req = true;
     :: (DN.sense && DN.color == GREEN) ->
-            DN.sense = false;
+        DN.sense = false;
     od
 }
 
 /* Процесс для каждого направления (сфетофора) */
-proctype NSproc() {
+active proctype NSproc() {
     do
     /* Если есть запрос и нет блокировки переходим в atomic блок */
     :: (NS.req && !NS.lock) ->
@@ -112,7 +112,7 @@ proctype NSproc() {
     od
 }
 
-proctype EWproc() {
+active proctype EWproc() {
     do
     :: (EW.req && !EW.lock) ->
         atomic {
@@ -130,7 +130,7 @@ proctype EWproc() {
     od
 }
 
-proctype SDproc() {
+active proctype SDproc() {
     do
     :: (SD.req && !SD.lock) ->
         atomic {
@@ -148,7 +148,7 @@ proctype SDproc() {
     od
 }
 
-proctype WNproc() {
+active proctype WNproc() {
     do
     :: (WN.req && !WN.lock) ->
         atomic {
@@ -166,7 +166,7 @@ proctype WNproc() {
     od
 }
 
-proctype WDproc() {
+active proctype WDproc() {
     do
     :: (WD.req && !WD.lock) ->
         atomic {
@@ -184,7 +184,7 @@ proctype WDproc() {
     od
 }
 
-proctype DNproc() {
+active proctype DNproc() {
     do
     :: (DN.req && !DN.lock) ->
         atomic {
@@ -200,17 +200,4 @@ proctype DNproc() {
     :: (!DN.sense && DN.req) ->
         DN.req = false;
     od
-}
-
-/* Запускаем все процессы */
-init {
-    atomic {
-        run Traffic();
-        run NSproc(); 
-        run EWproc();
-        run SDproc();
-        run WNproc();
-        run WDproc();
-        run DNproc();
-    }
 }
