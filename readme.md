@@ -1,10 +1,12 @@
 
 ## Сборка
 ```bat
-.\run.bat
+.\build.bat
 ```
 
 ## Запуск
+Запустить все: `.\run.bat`
+
 ```
 .\model.exe -m100000 -a -n -c1 -N [ltl]
 ```
