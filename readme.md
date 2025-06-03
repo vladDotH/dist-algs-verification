@@ -8,7 +8,7 @@
 Запустить все: `.\run.bat`
 
 ```
-.\model.exe -m100000 -a -n -c1 -N [ltl]
+.\model.exe -m1000000000 -a -n -f -c1 -N [ltl]
 ```
 ltl:
  - safetyNS
