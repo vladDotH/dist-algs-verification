@@ -6,28 +6,29 @@ typedef TLight {
 
 mtype = { GREEN, RED }
 
-TLight NS, EW, SD, WN, DN;
+TLight NS, EW, SD, WN, WD, DN;
 
 // Количество пересечений
-#define N 4
+#define N 6
 // Количество направлений
-#define M 5
+#define M 6
 // Id направлений
 #define NSid 0
 #define EWid 1
 #define SDid 2
 #define WNid 3
-#define DNid 4
+#define WDid 4
+#define DNid 5
 
 /* Очереди мьютексов для пересечений */
 chan lock[N] = [M] of { int };
 
 /* Условия безопасности */
 ltl safetyNS { [] !((NS.color == GREEN) && (EW.color == GREEN || SD.color == GREEN || WN.color == GREEN || DN.color == GREEN)) }
-ltl safetyEW { [] !((EW.color == GREEN) && (NS.color == GREEN || SD.color == GREEN || WN.color == GREEN || DN.color == GREEN)) }
+ltl safetyEW { [] !((EW.color == GREEN) && (NS.color == GREEN || SD.color == GREEN || WN.color == GREEN || WD.color == GREEN || DN.color == GREEN)) }
 ltl safetySD { [] !((SD.color == GREEN) && (NS.color == GREEN || EW.color == GREEN || WN.color == GREEN || DN.color == GREEN)) }
 ltl safetyWN { [] !((WN.color == GREEN) && (NS.color == GREEN || SD.color == GREEN || EW.color == GREEN)) }
-ltl safetyDN { [] !((DN.color == GREEN) && (NS.color == GREEN || EW.color == GREEN || SD.color == GREEN)) }
+ltl safetyDN { [] !((DN.color == GREEN) && (NS.color == GREEN || EW.color == GREEN || SD.color == GREEN) || WD.color == GREEN) }
 
 /* Условия живости */
 ltl livenessNS { [] ((NS.sense && (NS.color == RED)) -> <> (NS.color == GREEN)) }
@@ -49,11 +50,13 @@ init {
         EW.color = RED;
         SD.color = RED;
         WN.color = RED;
+        WD.color = RED;
         DN.color = RED;
         NS.sense = false;
         EW.sense = false;
         SD.sense = false;
         WN.sense = false;
+        WD.sense = false;
         DN.sense = false;
 
         run Traffic();
@@ -61,6 +64,7 @@ init {
         run EWproc(); 
         run SDproc();
         run WNproc();
+        run WDproc();
         run DNproc();
     }
 }
@@ -79,101 +83,125 @@ proctype Traffic() {
 /* Процесс для каждого направления (сфетофора) */
 proctype NSproc() {
     do
-    :: NS.color == GREEN -> {
-        NS.color = RED;
-        // Освобождаем канал от своего id
-        lock[1] ? NSid;
-        lock[3] ? NSid;
-    }
-    :: NS.sense && NS.color == RED -> {
+    :: NS.sense -> {
         // Добавляем наш id в канал
-        lock[1] ! NSid;
-        // Ждём пока до него дойдёт очередь
-        lock[1] ? <NSid>;
-        // Аналогично
         lock[3] ! NSid;
+        // Ждём пока до него дойдёт очередь
         lock[3] ? <NSid>;
+        // Аналогично
+        lock[5] ! NSid;
+        lock[5] ? <NSid>;
+
+        // Выключаем сенсор и устанавливаем зелёный свет
         NS.sense = false;
         NS.color = GREEN;
+
+        /* Происходит проезд */
+
+        /* Устанавливаем красный свет */
+        NS.color = RED;
+        // Освобождаем канал от своего id
+        lock[3] ? NSid;
+        lock[5] ? NSid;
     }
     od
 }
 
 proctype EWproc() {
     do
-    :: EW.color == GREEN -> {
-        EW.color = RED;
-        lock[0] ? EWid;
-        lock[1] ? EWid;
-        lock[2] ? EWid;
-    }
-    :: EW.sense && EW.color == RED -> {
-        lock[0] ! EWid;
-        lock[0] ? <EWid>;
+    :: EW.sense -> {
         lock[1] ! EWid;
         lock[1] ? <EWid>;
         lock[2] ! EWid;
         lock[2] ? <EWid>;
+        lock[3] ! EWid;
+        lock[3] ? <EWid>;
+        lock[4] ! EWid;
+        lock[4] ? <EWid>;
         
         EW.sense = false;
         EW.color = GREEN;
+        /* */
+        EW.color = RED;
+        lock[1] ? EWid;
+        lock[2] ? EWid;
+        lock[3] ? EWid;
+        lock[4] ? EWid;
     }
     od
 }
 
 proctype SDproc() {
     do
-    :: SD.color == GREEN -> {
-        SD.color = RED;
-        lock[0] ? SDid;
-        lock[3] ? SDid;
-    }
-    :: SD.sense && SD.color == RED -> {
-        lock[0] ! SDid;
-        lock[0] ? <SDid>;
-        lock[3] ! SDid;
-        lock[3] ? <SDid>;
+    :: SD.sense -> {
+        lock[2] ! SDid;
+        lock[2] ? <SDid>;
+        lock[5] ! SDid;
+        lock[5] ? <SDid>;
         
         SD.sense = false;
         SD.color = GREEN;
+        /* */
+        SD.color = RED;
+        lock[2] ? SDid;
+        lock[5] ? SDid;
     }
     od
 }
 
 proctype WNproc() {
     do
-    :: WN.color == GREEN -> {
-        WN.color = RED;
-        lock[2] ? WNid;
-        lock[3] ? WNid;
-    }
-    :: WN.sense && WN.color == RED -> {
-        lock[2] ! WNid;
-        lock[2] ? <WNid>;
-        lock[3] ! WNid;
-        lock[3] ? <WNid>;
+    :: WN.sense -> {
+        lock[4] ! WNid;
+        lock[4] ? <WNid>;
+        lock[5] ! WNid;
+        lock[5] ? <WNid>;
         
         WN.sense = false;
         WN.color = GREEN;
+        /* */
+        WN.color = RED;
+        lock[4] ? WNid;
+        lock[5] ? WNid;
+    }
+    od
+}
+
+proctype WDproc() {
+    do
+    :: WD.sense -> {
+        lock[0] ! WDid;
+        lock[0] ? <WDid>;
+        lock[1] ! WDid;
+        lock[1] ? <WDid>;
+        
+        WD.sense = false;
+        WD.color = GREEN;
+        /* */
+        WD.color = RED;
+        lock[0] ? WDid;
+        lock[1] ? WDid;
     }
     od
 }
 
 proctype DNproc() {
     do
-    :: DN.color == GREEN -> {
-        DN.color = RED;
-        lock[0] ? DNid;
-        lock[1] ? DNid;
-    }
-    :: DN.sense && DN.color == RED -> {
+    :: DN.sense -> {
         lock[0] ! DNid;
         lock[0] ? <DNid>;
-        lock[1] ! DNid;
-        lock[1] ? <DNid>;
+        lock[2] ! DNid;
+        lock[2] ? <DNid>;
+        lock[3] ! DNid;
+        lock[3] ? <DNid>;
         
         DN.sense = false;
         DN.color = GREEN;
+        /* */
+        DN.color = RED;
+        lock[0] ? DNid;
+        lock[2] ? DNid;
+        lock[3] ? DNid;
     }
     od
 }
