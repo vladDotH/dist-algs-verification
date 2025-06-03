@@ -28,13 +28,15 @@ ltl safetyNS { [] !((NS.color == GREEN) && (EW.color == GREEN || SD.color == GRE
 ltl safetyEW { [] !((EW.color == GREEN) && (NS.color == GREEN || SD.color == GREEN || WN.color == GREEN || WD.color == GREEN || DN.color == GREEN)) }
 ltl safetySD { [] !((SD.color == GREEN) && (NS.color == GREEN || EW.color == GREEN || WN.color == GREEN || DN.color == GREEN)) }
 ltl safetyWN { [] !((WN.color == GREEN) && (NS.color == GREEN || SD.color == GREEN || EW.color == GREEN)) }
-ltl safetyDN { [] !((DN.color == GREEN) && (NS.color == GREEN || EW.color == GREEN || SD.color == GREEN) || WD.color == GREEN) }
+ltl safetyWD { [] !((WD.color == GREEN) && (EW.color == GREEN || DN.color == GREEN)) }
+ltl safetyDN { [] !((DN.color == GREEN) && (NS.color == GREEN || EW.color == GREEN || SD.color == GREEN || WD.color == GREEN)) }
 
 /* Условия живости */
 ltl livenessNS { [] ((NS.sense && (NS.color == RED)) -> <> (NS.color == GREEN)) }
 ltl livenessEW { [] ((EW.sense && (EW.color == RED)) -> <> (EW.color == GREEN)) }
 ltl livenessSD { [] ((SD.sense && (SD.color == RED)) -> <> (SD.color == GREEN)) }
 ltl livenessWN { [] ((WN.sense && (WN.color == RED)) -> <> (WN.color == GREEN)) }
+ltl livenessWD { [] ((WD.sense && (WD.color == RED)) -> <> (WD.color == GREEN)) }
 ltl livenessDN { [] ((DN.sense && (DN.color == RED)) -> <> (DN.color == GREEN)) }
 
 /* Условия справедливости */
@@ -42,6 +44,7 @@ ltl fairnessNS { [] <> !((NS.color == GREEN) && NS.sense) }
 ltl fairnessEW { [] <> !((EW.color == GREEN) && EW.sense) }
 ltl fairnessSD { [] <> !((SD.color == GREEN) && SD.sense) }
 ltl fairnessWN { [] <> !((WN.color == GREEN) && WN.sense) }
+ltl fairnessWD { [] <> !((WD.color == GREEN) && WD.sense) }
 ltl fairnessDN { [] <> !((DN.color == GREEN) && DN.sense) }
 
 init {
@@ -76,6 +79,7 @@ proctype Traffic() {
     :: !EW.sense -> EW.sense = true
     :: !SD.sense -> SD.sense = true
     :: !WN.sense -> WN.sense = true
+    :: !WD.sense -> WD.sense = true
     :: !DN.sense -> DN.sense = true
     od
 }
